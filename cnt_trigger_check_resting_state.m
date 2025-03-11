@@ -3,7 +3,15 @@ function [] = cnt_trigger_check_resting_state(EEG_event, Fs)
 event_array = {EEG_event.type};
 latency_array = cell2mat({EEG_event.latency});
 task_start_code_idx = find(matches(event_array, '100'));
-task_code = event_array{task_start_code_idx + 1};
+
+if isscalar(task_start_code_idx)
+    task_code = event_array{task_start_code_idx + 1};
+else
+    current_task_code = unique(event_array(task_start_code_idx+1));
+    assert(isscalar(current_task_code), 'Multiple task codes within this recording. Please check!')
+    task_code = current_task_code{1};
+    task_start_code_idx = task_start_code_idx(end);
+end
 
 if ~isequal(task_code, '101')
     disp(['Task code trigger for this resting_state recording is not 101. The code is instead: ', task_code])

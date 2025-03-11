@@ -14,6 +14,7 @@ if isempty(convert_success_idx)
     disp(cmdout)
     msg_table = [];
     rawdata = [];
+
 else
     disp(cmdout(convert_success_idx:end))
 

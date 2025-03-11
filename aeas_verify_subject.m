@@ -49,7 +49,7 @@ disp(startdatetime)
 
 
 
-%% Check all files are present for the subject
+%% Check that all files are present for the subject
 disp([newline newline])
 disp('[Checking that all subfolders have the correct files...]')
 disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
@@ -69,10 +69,10 @@ file_check_exist(p, [subID, '_resting.evt'])
 file_check_not_exist(p, [subID, '_resting.seg'])
 
 % Since the task data are contained in one recording with multiple segments
-% and using the recording date in the file name, we need a flexile routine
+% and using the recording date in the file name, we need a flexible routine
 % to detect them and flag
 raw_fns = {dir(p).name};
-raw_fns = raw_fns(~startsWith(raw_fns, '.') & ~contains(raw_fns, 'resting'));
+raw_fns = raw_fns(~startsWith(raw_fns, '.') & ~contains(raw_fns, 'resting') & contains(raw_fns, subID));
 task_fn_body = unique(erase(raw_fns, {'.cnt', '.evt', '.seg'}));
 if length(task_fn_body) > 1
     disp('Multiple task files:')
@@ -93,13 +93,13 @@ disp([newline, 'completed.'])
 disp('--------------------------------------------------')
 disp([mHead, 'folder: ', subID, '/task'])
 p = fullfile(subDir, 'task');
-num_reps = zeros(1, 5);
+num_reps_psychopy = zeros(1, 5);
 edf_fns = cell(1, 5);
-[ num_reps(1), edf_fns{1} ] = file_check_psychopy_files(p, 'resting_state');
-[ num_reps(2), edf_fns{2} ] = file_check_psychopy_files(p, 'emg_artifact');
-[ num_reps(3), edf_fns{3} ] = file_check_psychopy_files(p, 'bluegrass_memory');
-[ num_reps(4), edf_fns{4} ] = file_check_psychopy_files(p, 'auditory_oddball');
-[ num_reps(5), edf_fns{5} ] = file_check_psychopy_files(p, 'feature_binding');
+[ num_reps_psychopy(1), edf_fns{1} ] = file_check_psychopy_files(p, subID, 'resting_state');
+[ num_reps_psychopy(2), edf_fns{2} ] = file_check_psychopy_files(p, subID, 'emg_artifact');
+[ num_reps_psychopy(3), edf_fns{3} ] = file_check_psychopy_files(p, subID, 'bluegrass_memory');
+[ num_reps_psychopy(4), edf_fns{4} ] = file_check_psychopy_files(p, subID, 'auditory_oddball');
+[ num_reps_psychopy(5), edf_fns{5} ] = file_check_psychopy_files(p, subID, 'feature_binding');
 disp([newline, 'completed.'])
 disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
 
@@ -132,52 +132,60 @@ disp([newline, 'completed.'])
 
 if ~isempty(EEG_tasks)
     %%
-    disp('--------------------------------------------------')
-    disp(['Checking the task triggers during [ ', 'emg_artifact', ' ]...', newline])
     task_order = 1;
-    if num_reps(task_order + 1) ~= num_reps_EEG(task_order) % verify the task repetition number
-        disp(['The numbers of times starting the task do not match between PsychoPy files (',...
-            num2str(num_reps(task_order + 1)), ') and EEG recording (', num2str(num_reps_EEG(task_order)) ,').'])
+    if ~isempty(EEG_tasks{task_order})
+        disp('--------------------------------------------------')
+        disp(['Checking the task triggers during [ ', 'emg_artifact', ' ]...', newline])
+        if num_reps_psychopy(task_order + 1) ~= num_reps_EEG(task_order) % verify the task repetition number
+            disp(['The numbers of times starting the task do not match between PsychoPy files (',...
+                num2str(num_reps_psychopy(task_order + 1)), ') and EEG recording (', num2str(num_reps_EEG(task_order)) ,').'])
+        end
+        cnt_trigger_check_marching_light(EEG_tasks{task_order}.event)
+        cnt_trigger_check_emg_artifact(EEG_tasks{task_order}.event, EEG_tasks{task_order}.srate)
+        disp([newline, 'completed.'])
     end
-    cnt_trigger_check_marching_light(EEG_tasks{task_order}.event)
-    cnt_trigger_check_emg_artifact(EEG_tasks{task_order}.event, EEG_tasks{task_order}.srate)
-    disp([newline, 'completed.'])
 
     %%
-    disp('--------------------------------------------------')
-    disp(['Checking the task triggers during [ ', 'bluegrass_memory', ' ]...', newline])
     task_order = 2;
-    if num_reps(task_order + 1) ~= num_reps_EEG(task_order) % verify the task repetition number
-        disp(['The numbers of times starting the task do not match between PsychoPy files (',...
-            num2str(num_reps(task_order + 1)), ') and EEG recording (', num2str(num_reps_EEG(task_order)) ,').'])
+    if ~isempty(EEG_tasks{task_order})
+        disp('--------------------------------------------------')
+        disp(['Checking the task triggers during [ ', 'bluegrass_memory', ' ]...', newline])
+        if num_reps_psychopy(task_order + 1) ~= num_reps_EEG(task_order) % verify the task repetition number
+            disp(['The numbers of times starting the task do not match between PsychoPy files (',...
+                num2str(num_reps_psychopy(task_order + 1)), ') and EEG recording (', num2str(num_reps_EEG(task_order)) ,').'])
+        end
+        cnt_trigger_check_marching_light(EEG_tasks{task_order}.event)
+        cnt_trigger_check_bluegrass_memory(EEG_tasks{task_order}.event, EEG_tasks{task_order}.srate)
+        disp([newline, 'completed.'])
     end
-    cnt_trigger_check_marching_light(EEG_tasks{task_order}.event)
-    cnt_trigger_check_bluegrass_memory(EEG_tasks{task_order}.event, EEG_tasks{task_order}.srate)
-    disp([newline, 'completed.'])
 
     %%
-    disp('--------------------------------------------------')
-    disp(['Checking the task triggers during [ ', 'oddball', ' ]...', newline])
     task_order = 3;
-    if num_reps(task_order + 1) ~= num_reps_EEG(task_order) % verify the task repetition number
-        disp(['The numbers of times starting the task do not match between PsychoPy files (',...
-            num2str(num_reps(task_order + 1)), ') and EEG recording (', num2str(num_reps_EEG(task_order)) ,').'])
+    if ~isempty(EEG_tasks{task_order})
+        disp('--------------------------------------------------')
+        disp(['Checking the task triggers during [ ', 'auditory_oddball', ' ]...', newline])
+        if num_reps_psychopy(task_order + 1) ~= num_reps_EEG(task_order) % verify the task repetition number
+            disp(['The numbers of times starting the task do not match between PsychoPy files (',...
+                num2str(num_reps_psychopy(task_order + 1)), ') and EEG recording (', num2str(num_reps_EEG(task_order)) ,').'])
+        end
+        cnt_trigger_check_marching_light(EEG_tasks{task_order}.event)
+        cnt_trigger_check_auditory_oddball(EEG_tasks{task_order}.event, EEG_tasks{task_order}.srate)
+        disp([newline, 'completed.'])
     end
-    cnt_trigger_check_marching_light(EEG_tasks{task_order}.event)
-    cnt_trigger_check_auditory_oddball(EEG_tasks{task_order}.event, EEG_tasks{task_order}.srate)
-    disp([newline, 'completed.'])
 
     %%
-    disp('--------------------------------------------------')
-    disp(['Checking the task triggers during [ ', 'feature_binding', ' ]...', newline])
     task_order = 4;
-    if num_reps(task_order + 1) ~= num_reps_EEG(task_order) % verify the task repetition number
-        disp(['The numbers of times starting the task do not match between PsychoPy files (',...
-            num2str(num_reps(task_order + 1)), ') and EEG recording (', num2str(num_reps_EEG(task_order)) ,').'])
+    if ~isempty(EEG_tasks{task_order})
+        disp('--------------------------------------------------')
+        disp(['Checking the task triggers during [ ', 'feature_binding', ' ]...', newline])
+        if num_reps_psychopy(task_order + 1) ~= num_reps_EEG(task_order) % verify the task repetition number
+            disp(['The numbers of times starting the task do not match between PsychoPy files (',...
+                num2str(num_reps_psychopy(task_order + 1)), ') and EEG recording (', num2str(num_reps_EEG(task_order)) ,').'])
+        end
+        cnt_trigger_check_marching_light(EEG_tasks{task_order}.event)
+        cnt_trigger_check_feature_binding(EEG_tasks{task_order}.event, EEG_tasks{task_order}.srate)
+        disp([newline, 'completed.'])
     end
-    cnt_trigger_check_marching_light(EEG_tasks{task_order}.event)
-    cnt_trigger_check_feature_binding(EEG_tasks{task_order}.event, EEG_tasks{task_order}.srate)
-    disp([newline, 'completed.'])
 
 end
 disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
@@ -196,49 +204,64 @@ disp([mHead, 'folder: ', subID, '/task', newline])
 p = fullfile(subDir, 'task');
 
 %%
-disp('--------------------------------------------------')
-[ msg_table, rawdata ] = edf_extract_triggers(p, edf_fns{1});
-if ~isempty(msg_table)
-    fprintf(newline)
-    edf_trigger_check_resting_state(msg_table, rawdata)
+task_order = 1;
+if ~isempty(edf_fns{task_order})
+    disp('--------------------------------------------------')
+    [ msg_table, rawdata ] = edf_extract_triggers(p, edf_fns{task_order});
+    if ~isempty(msg_table)
+        fprintf(newline)
+        edf_trigger_check_resting_state(msg_table, rawdata)
+    end
+    disp([newline, 'completed.'])
 end
-disp([newline, 'completed.'])
 
 %%
-disp('--------------------------------------------------')
-[ msg_table, rawdata ] = edf_extract_triggers(p, edf_fns{2});
-if ~isempty(msg_table)
-    fprintf(newline)
-    edf_trigger_check_emg_artifact(msg_table, rawdata)
+task_order = 2;
+if ~isempty(edf_fns{task_order})
+    disp('--------------------------------------------------')
+    [ msg_table, rawdata ] = edf_extract_triggers(p, edf_fns{task_order});
+    if ~isempty(msg_table)
+        fprintf(newline)
+        edf_trigger_check_emg_artifact(msg_table, rawdata)
+    end
+    disp([newline, 'completed.'])
 end
-disp([newline, 'completed.'])
 
 %%
-disp('--------------------------------------------------')
-[ msg_table, rawdata ] = edf_extract_triggers(p, edf_fns{3});
-if ~isempty(msg_table)
-    fprintf(newline)
-    edf_trigger_check_bluegrass_memory(msg_table, rawdata)
+task_order = 3;
+if ~isempty(edf_fns{task_order})
+    disp('--------------------------------------------------')
+    [ msg_table, rawdata ] = edf_extract_triggers(p, edf_fns{task_order});
+    if ~isempty(msg_table)
+        fprintf(newline)
+        edf_trigger_check_bluegrass_memory(msg_table, rawdata)
+    end
+    disp([newline, 'completed.'])
 end
-disp([newline, 'completed.'])
 
 %%
-disp('--------------------------------------------------')
-[ msg_table, rawdata ] = edf_extract_triggers(p, edf_fns{4});
-if ~isempty(msg_table)
-    fprintf(newline)
-    edf_trigger_check_auditory_oddball(msg_table, rawdata)
+task_order = 4;
+if ~isempty(edf_fns{task_order})
+    disp('--------------------------------------------------')
+    [ msg_table, rawdata ] = edf_extract_triggers(p, edf_fns{task_order});
+    if ~isempty(msg_table)
+        fprintf(newline)
+        edf_trigger_check_auditory_oddball(msg_table, rawdata)
+    end
+    disp([newline, 'completed.'])
 end
-disp([newline, 'completed.'])
 
 %%
-disp('--------------------------------------------------')
-[ msg_table, rawdata ] = edf_extract_triggers(p, edf_fns{5});
-if ~isempty(msg_table)
-    fprintf(newline)
-    edf_trigger_check_feature_binding(msg_table, rawdata)
+task_order = 5;
+if ~isempty(edf_fns{task_order})
+    disp('--------------------------------------------------')
+    [ msg_table, rawdata ] = edf_extract_triggers(p, edf_fns{task_order});
+    if ~isempty(msg_table)
+        fprintf(newline)
+        edf_trigger_check_feature_binding(msg_table, rawdata)
+    end
+    disp([newline, 'completed.'])
 end
-disp([newline, 'completed.'])
 
 %%
 disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')

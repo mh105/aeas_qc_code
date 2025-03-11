@@ -1,11 +1,10 @@
 function [] = cnt_check_segment_issues(EEG1)
 
 %% Check impedance
-if ~strcmp(EEG1.event(1).type, '0, Impedance')
-    disp('Start impedance measures are missing!')
+impedance_rows = find(matches({EEG1.event.type}, {'0, Impedance', '0, Impedance (previous)'}));
+if length(impedance_rows) < 1
+    disp('Initial impedance measures are missing!')
 end
-
-impedance_rows = find(matches({EEG1.event.type}, '0, Impedance'));
 if length(impedance_rows) < 2
     disp('End impedance measures are missing!')
 end

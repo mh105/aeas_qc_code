@@ -42,8 +42,8 @@ if isfile(fullfile(fpath, fname))
     end
 
     %% Next we need to figure out the corresponding task code for each partition
-    % There is a special edge case if a task is restarted without closing
-    % out an ongoing recording, then we will end up with multiple task
+    % There is a special edge case if a task is restarted without manually
+    % stopping an ongoing recording, then we will end up with multiple task
     % codes within each partition that needs to be handled.
     task_codes = zeros(2, length(partitions));
     for ii = 1:length(partitions)

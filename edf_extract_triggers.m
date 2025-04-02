@@ -59,14 +59,16 @@ else
         cal_line = find(matches(rawdata(start_search_idx:start_line(ii), 1), '>>>>>>> CALIBRATION (HV9,P-CR) FOR LEFT: <<<<<<<<<'));
         disp(['Number of calibration performed to start this block: ', num2str(length(cal_line))])
         if length(cal_line) >= 1
-            val_line = find(contains(rawdata(cal_line(end):start_line(ii), 2), 'VALIDATION HV9 L LEFT'));
+            tmp_idx = start_search_idx:start_line(ii);
+            val_line = find(contains(rawdata(tmp_idx(cal_line(end)):start_line(ii), 2), 'VALIDATION HV9 L LEFT'));
             disp(['Number of validation performed for the last calibration: ', num2str(length(val_line))])
         end
 
         cal_line_post_start = find(matches(rawdata(start_line(ii):end_line(ii), 1), '>>>>>>> CALIBRATION (HV9,P-CR) FOR LEFT: <<<<<<<<<'));
         if length(cal_line_post_start) >= 1
             disp(['Number of additional calibration performed after the block starts: ', num2str(length(cal_line_post_start))])
-            val_line = find(contains(rawdata(cal_line_post_start(end):end_line(ii), 2), 'VALIDATION HV9 L LEFT'));
+            tmp_idx = start_line(ii):end_line(ii);
+            val_line = find(contains(rawdata(tmp_idx(cal_line_post_start(end)):end_line(ii), 2), 'VALIDATION HV9 L LEFT'));
             disp(['Number of additional validation performed for the last additional calibration: ', num2str(length(val_line))])
         end
 

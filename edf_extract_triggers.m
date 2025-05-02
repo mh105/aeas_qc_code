@@ -82,6 +82,34 @@ else
         % Online filter level = 0
         % Saved data filter level = 0
         % Tracking eye = LEFT
+
+        config_line = contains(rawdata(start_search_idx:start_line(ii), 2), 'ELCLCFG');
+        rawdata_tmp = rawdata(start_search_idx:start_line(ii), :);
+        config_string = strsplit(rawdata_tmp{config_line, 2}, 'ELCLCFG ');
+        assert(isequal(config_string{2}, 'MTABLER'), ['Eyetracker not in mounted table mode: ', config_string{2}])
+
+        config_line = contains(rawdata(start_search_idx:start_line(ii), 2), 'GAZE_COORDS');
+        rawdata_tmp = rawdata(start_search_idx:start_line(ii), :);
+        config_string = strsplit(rawdata_tmp{config_line, 2}, 'GAZE_COORDS ');
+        assert(isequal(config_string{2}, '0.00 0.00 1920.00 1080.00'), ['Gaze coordinates are different from expected: ', config_string{2}])
+
+        config_line = contains(rawdata(start_search_idx:start_line(ii), 2), 'ELCL_PROC');
+        rawdata_tmp = rawdata(start_search_idx:start_line(ii), :);
+        config_string = strsplit(rawdata_tmp{config_line, 2}, 'ELCL_PROC ');
+        assert(isequal(config_string{2}, 'ELLIPSE  (5)'), ['Pupil tracking algorithm is not ELLIPSE_FIT: ', config_string{2}])
+
+        config_line = strcmp(rawdata(start_line(ii):end_line(ii), 1), 'PRESCALER');
+        rawdata_tmp = rawdata(start_line(ii):end_line(ii), :);
+        assert(strcmp(rawdata_tmp{config_line, 2}, '1'), ['Gaze position scaler is not 1: ', config_string{2}])
+
+        config_line = strcmp(rawdata(start_line(ii):end_line(ii), 1), 'VPRESCALER');
+        rawdata_tmp = rawdata(start_line(ii):end_line(ii), :);
+        assert(strcmp(rawdata_tmp{config_line, 2}, '1'), ['Saccade velocity scaler is not 1: ', config_string{2}])
+
+        config_line = strcmp(rawdata(start_line(ii):end_line(ii), 1), 'PUPIL');
+        rawdata_tmp = rawdata(start_line(ii):end_line(ii), :);
+        assert(strcmp(rawdata_tmp{config_line, 2}, 'DIAMETER'), ['Pupil size measurement unit is not DIAMETER: ', config_string{2}])
+
     end
 
     %% Remove systems info at the beginning of each block and keep the MSG rows

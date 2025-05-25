@@ -45,46 +45,48 @@ if isfile(fullfile(fpath, fname))
     % There is a special edge case if a task is restarted without manually
     % stopping an ongoing recording, then we will end up with multiple task
     % codes within each partition that needs to be handled.
-    task_codes = zeros(2, length(partitions));
+    task_codes = zeros(length(partitions), 2);
     for ii = 1:length(partitions)
         current_triggers = partitions{ii};
         task_code_idx = find(matches(current_triggers(:, 2), '100'));
 
-        if isscalar(task_code_idx)
-            current_task_code = current_triggers{task_code_idx+1, 2};
-        elseif isempty(task_code_idx)
+        if isempty(task_code_idx)
             % This corresponds to a recording that was started but the
             % psychopy task did not begin, i.e., did not advance beyond the
             % subject info dialog box
             current_task_code = '';
         else
-            % First make sure they are the same task code. If not, then
-            % there is something wrong here
-            current_task_code = unique(current_triggers(task_code_idx+1, 2));
-            assert(isscalar(current_task_code), 'Multiple task codes within a partition. Please check!')
-            current_task_code = current_task_code{1};
-
-            % Then we use the latest task code as starting point, and we
-            % need to copy over the initial impedance since the recording
-            % continued and we do not have an extra impedance check
-            EEG1.event(length(EEG1.event) + 1) = EEG1.event(current_triggers{1, 3});
-            EEG1.event(length(EEG1.event)).latency = current_triggers{task_code_idx(end) - 1, 1};
-            EEG1.event(length(EEG1.event)).type = [EEG1.event(length(EEG1.event)).type, ' (previous)'];
-
-            % We update the partition table as well
-            tmp_line = current_triggers(1, :);
-            tmp_line{1} = EEG1.event(length(EEG1.event)).latency;
-            tmp_line{2} = [tmp_line{2}, ' (previous)'];
-            tmp_line{3} = NaN;
-            current_triggers(1:task_code_idx(end)-1, :) = [];
-            current_triggers = [tmp_line; current_triggers]; %#ok<AGROW>
-            partitions{ii} = current_triggers;
+            if isscalar(task_code_idx)
+                current_task_code = current_triggers{task_code_idx+1, 2};
+            else
+                % First make sure they are the same task code. If not, then
+                % there is something wrong here
+                current_task_code = unique(current_triggers(task_code_idx+1, 2));
+                assert(isscalar(current_task_code), 'Multiple task codes within a partition. Please check!')
+                current_task_code = current_task_code{1};
+    
+                % Then we use the latest task code as starting point, and we
+                % need to copy over the initial impedance since the recording
+                % continued and we do not have an extra impedance check
+                EEG1.event(length(EEG1.event) + 1) = EEG1.event(current_triggers{1, 3});
+                EEG1.event(length(EEG1.event)).latency = current_triggers{task_code_idx(end) - 1, 1};
+                EEG1.event(length(EEG1.event)).type = [EEG1.event(length(EEG1.event)).type, ' (previous)'];
+    
+                % We update the partition table as well
+                tmp_line = current_triggers(1, :);
+                tmp_line{1} = EEG1.event(length(EEG1.event)).latency;
+                tmp_line{2} = [tmp_line{2}, ' (previous)'];
+                tmp_line{3} = NaN;
+                current_triggers(1:task_code_idx(end)-1, :) = [];
+                current_triggers = [tmp_line; current_triggers]; %#ok<AGROW>
+                partitions{ii} = current_triggers;
+            end
+    
+            % Verify the standardized partition triggers for later extraction
+            assert(size(current_triggers, 1) == 4, 'Current triggers are not size 4. Extra triggers or missing triggers.')
+            assert(isequal(current_triggers{2, 2}, '100'), 'Second trigger is not a task start code. Something is wrong.')
+            assert(isequal(find(contains(current_triggers(:, 2), 'Impedance')), [1, 4]'), 'Impedance triggers are not the first and last triggers.')
         end
-
-        % Verify the standardized partition triggers for later extraction
-        assert(size(current_triggers, 1) == 4, 'Current triggers are not size 4. Extra triggers or missing triggers.')
-        assert(isequal(current_triggers{2, 2}, '100'), 'Second trigger is not a task start code. Something is wrong.')
-        assert(isequal(find(contains(current_triggers(:, 2), 'Impedance')), [1, 4]'), 'Impedance triggers are not the first and last triggers.')
 
         % Save out the detected task code
         task_codes(ii, 1) = str2double(current_task_code);

@@ -7,5 +7,5 @@ eventStr = strjoin(event_array, ' ');
 targetStr = strjoin(targetSeq, ' ');
 
 if ~contains(eventStr, targetStr)
-    dips('Cannot find marching light triggers in this task recording.')
+    disp('Cannot find marching light triggers in this task recording.')
 end

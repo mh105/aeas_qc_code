@@ -14,7 +14,7 @@ if isfile(fullfile(fpath, fname))
     partition_triggers = {};
     event_array = {EEG1.event.type};
     latency_array = {EEG1.event.latency};
-    idx = contains(event_array, {'Impedance', 'Amplifier disconnected'}) | matches(event_array, {'100', '101', '102', '103', '104', '105', '106'});
+    idx = contains(event_array, {'Impedance', 'Amplifier disconnected'}) | matches(event_array, {'100', '101', '102', '103', '104', '105', '106', '107'});
     partition_triggers(:, 1) = latency_array(idx)';
     partition_triggers(:, 2) = event_array(idx)';
     partition_triggers(:, 3) = num2cell(find(idx)');
@@ -99,8 +99,8 @@ if isfile(fullfile(fpath, fname))
     diary on
 
     %% Output each task recording as a separate EEG struct
-    num_reps = zeros(1, 4); % also keep track of how many times it repeats
-    EEG_tasks = cell(1, 4);
+    num_reps = zeros(1, 5); % also keep track of how many times it repeats
+    EEG_tasks = cell(1, 5);
 
     % emg_artifact - task code = 105
     [ EEG_tasks{1}, num_reps(1) ] = cnt_extract_task_segment(EEG1, partitions, task_codes, 105);
@@ -113,6 +113,9 @@ if isfile(fullfile(fpath, fname))
 
     % feature_binding - task code = 106
     [ EEG_tasks{4}, num_reps(4) ] = cnt_extract_task_segment(EEG1, partitions, task_codes, 106);
+
+    % directed_forgetting - task code = 107
+    [ EEG_tasks{5}, num_reps(5) ] = cnt_extract_task_segment(EEG1, partitions, task_codes, 107);
 
     %% Check each EEG struct for recording issues before output
     disp(['Checking the .cnt file segment of ', '[ emg_artifact ]', '...'])
@@ -144,6 +147,13 @@ if isfile(fullfile(fpath, fname))
         cnt_check_segment_issues(EEG_tasks{4})
     else
         disp(['Missing file segment [ ', 'feature_binding', ' ] in the .cnt file.'])
+    end
+
+    disp(['Checking the .cnt file segment of ', '[ directed_forgetting ]', '...'])
+    if ~isempty(EEG_tasks{5})
+        cnt_check_segment_issues(EEG_tasks{5})
+    else
+        disp(['Missing file segment [ ', 'directed_forgetting', ' ] in the .cnt file.'])
     end
 
 else

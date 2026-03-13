@@ -21,7 +21,7 @@ n_trials = n_blocks_practice * n_trials_per_block_practice + n_blocks * n_trials
 trial_code_array = [9, 10, 11, 12, 13, 14, 16];
 for ii = 1:length(trial_code_array)
     if sum(msg_table.msg == trial_code_array(ii)) ~= n_trials
-        disp(['Not exactly ', num2str(n_trials), ' trials are found in the file using trigger code: ', trial_code_array{ii}])
+        disp(['Not exactly ', num2str(n_trials), ' trials are found in the file using trigger code: ', num2str(trial_code_array(ii))])
     end
 end
 

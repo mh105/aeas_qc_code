@@ -25,8 +25,25 @@ if isfile(fullfile(fpath, fname))
     % these when partitioning the recording. We check this iteratively.
     disconnect_idx = find(contains(partition_triggers(:, 2), 'Amplifier disconnected'), 1); % returns the first nonzero index
     while ~isempty(disconnect_idx)
-        % Remove the surrounding rows from the partition triggers table
-        partition_triggers(disconnect_idx-1:disconnect_idx+1, :) = [];
+        % An edge case is that amplifier could get disconnected between two tasks
+        disconnect_outside_recording = false;
+        event_back = event_array{max(1, partition_triggers{disconnect_idx, 3} - 2)};
+        event_forward_start_idx = min(partition_triggers{disconnect_idx, 3} + 2, length(event_array));
+        event_forward_end_idx = min(partition_triggers{disconnect_idx, 3} + 8, length(event_array));
+        event_forward = strjoin(event_array(event_forward_start_idx:event_forward_end_idx), ' ');
+        if strcmp(event_back, '127') % recording stopped before disconnection
+            disconnect_outside_recording = true;
+        elseif strcmp(event_forward, '1 2 4 8 16 32 64') % recording started after disconnection
+            disconnect_outside_recording = true;
+        end
+
+        if ~disconnect_outside_recording
+            % Remove the surrounding impedance checks from the partition triggers table
+            partition_triggers(disconnect_idx-1:disconnect_idx+1, :) = [];
+        else
+            % Only remove the amplifer disconnect event itself if it happened outside recording
+            partition_triggers(disconnect_idx, :) = [];
+        end
         disconnect_idx = find(contains(partition_triggers(:, 2), 'Amplifier disconnected'), 1);
     end
 
@@ -64,14 +81,14 @@ if isfile(fullfile(fpath, fname))
                 current_task_code = unique(current_triggers(task_code_idx+1, 2));
                 assert(isscalar(current_task_code), 'Multiple task codes within a partition. Please check!')
                 current_task_code = current_task_code{1};
-    
+
                 % Then we use the latest task code as starting point, and we
                 % need to copy over the initial impedance since the recording
                 % continued and we do not have an extra impedance check
                 EEG1.event(length(EEG1.event) + 1) = EEG1.event(current_triggers{1, 3});
                 EEG1.event(length(EEG1.event)).latency = current_triggers{task_code_idx(end) - 1, 1};
                 EEG1.event(length(EEG1.event)).type = [EEG1.event(length(EEG1.event)).type, ' (previous)'];
-    
+
                 % We update the partition table as well
                 tmp_line = current_triggers(1, :);
                 tmp_line{1} = EEG1.event(length(EEG1.event)).latency;
@@ -81,7 +98,7 @@ if isfile(fullfile(fpath, fname))
                 current_triggers = [tmp_line; current_triggers]; %#ok<AGROW>
                 partitions{ii} = current_triggers;
             end
-    
+
             % Verify the standardized partition triggers for later extraction
             assert(size(current_triggers, 1) == 4, 'Current triggers are not size 4. Extra triggers or missing triggers.')
             assert(isequal(current_triggers{2, 2}, '100'), 'Second trigger is not a task start code. Something is wrong.')

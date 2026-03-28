@@ -47,13 +47,14 @@ if num_rep > 0
     endimp_indices = find(latencies == latencies(tmp_endimp_idx) & impedance_idx);
     endimp_idx = endimp_indices(1);
 
+    % Extract the impedance values
     assert(length(EEG2.initimp) == (length(EEG2.event(initimp_idx).impedance) + 1), 'Number of impedance values is incorrect. Cannot update!')
     assert(length(EEG2.endimp) == (length(EEG2.event(endimp_idx).impedance) + 1), 'Number of impedance values is incorrect. Cannot update!')
     EEG2.initimp(1:end-1) = EEG2.event(initimp_idx).impedance;
     EEG2.endimp(1:end-1) = EEG2.event(endimp_idx).impedance;
 
-    % Remove the extra impedance checks from other segments
-    EEG2.event([initimp_indices(1:end-1), endimp_indices(2:end)]) = [];
+    % Remove extra events from other segments
+    EEG2.event = EEG2.event(initimp_idx:endimp_idx);
 
     %% Verify the consistency of all EEG struct fields
     EEG2 = eeg_checkset(EEG2);

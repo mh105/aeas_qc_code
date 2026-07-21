@@ -79,8 +79,12 @@ if isfile(fullfile(fpath, fname))
                 % First make sure they are the same task code. If not, then
                 % there is something wrong here
                 current_task_code = unique(current_triggers(task_code_idx+1, 2));
-                assert(isscalar(current_task_code), 'Multiple task codes within a partition. Please check!')
-                current_task_code = current_task_code{1};
+                if ~isscalar(current_task_code)
+                    warning('Multiple task codes within a partition. Using the latest one to label the partition.')
+                    current_task_code = current_triggers{task_code_idx(end)+1, 2};
+                else
+                    current_task_code = current_task_code{1};
+                end
 
                 % Then we use the latest task code as starting point, and we
                 % need to copy over the initial impedance since the recording
